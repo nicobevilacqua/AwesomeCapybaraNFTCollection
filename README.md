@@ -25,6 +25,7 @@ npx solhint 'contracts/**/*.sol'
 npx solhint 'contracts/**/*.sol' --fix
 ```
 
+
 # Etherscan verification
 
 To try out Etherscan verification, you first need to deploy a contract to an Ethereum network that's supported by Etherscan, such as Ropsten.
