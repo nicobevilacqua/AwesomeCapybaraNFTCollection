@@ -1,10 +1,16 @@
 {
-  "name": "hardhat-solidity-typescript-boilerplate",
+  "name": "awesome-capybara-nft-collection",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "git@github.com:nicobevilacqua/hardhat-solidity-typescript-boilerplate.git",
+  "repository": "git@github.com:nicobevilacqua/AwesomeCapybaraNFTCollection.git",
   "author": "Nicolas Bevilacqua <nicobevilacqua@gmail.com>",
   "license": "MIT",
+  "scripts": {
+    "docs": "cd frontend; npm run build; cp -r dist/* ../docs;",
+    "frontend:test": "cd frontend; npm run test",
+    "contract:test": "hardhat test test/*",
+    "test": "npm run contract:test && npm run frontend:test"
+  },
   "dependencies": {
     "hardhat": "^2.6.4",
     "hardhat-watcher": "^2.1.1",
