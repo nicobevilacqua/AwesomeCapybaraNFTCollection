@@ -3,3 +3,7 @@ node_modules
 dist-ssr
 *.local
 dist
+yarn-error.log
+configs/localhost.json
+.vscode
+coverage
