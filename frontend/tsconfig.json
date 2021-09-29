@@ -2,16 +2,15 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "module": "commonjs",
+    "module": "ES2020",
     "moduleResolution": "node",
     "strict": true,
     "jsx": "preserve",
     "sourceMap": true,
-    "types": ["vite/client", "@types/jest"],
+    "types": ["vite/client", "@types/jest", "@types/node"],
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "lib": ["ES2020"],
-    
+    "lib": ["ES2020"]
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
 }
