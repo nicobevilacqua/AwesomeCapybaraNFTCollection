@@ -8,23 +8,164 @@ import 'solidity-coverage';
 import 'hardhat-watcher';
 import { task } from 'hardhat/config';
 import path from 'path';
+import fs from 'fs';
 
-// This is a sample Hardhat task. To learn how to create your own go to
-// https://hardhat.org/guides/create-task.html
-task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
-  const accounts = await hre.ethers.getSigners();
+import { uploadTokenImage } from './utils/uploadTokenImage';
 
-  for (const account of accounts) {
-    console.log(account.address);
+const TOKEN_NAME_PREFIX = 'Collection Item:';
+const TOKEN_DESCRIPTION = 'Awesome Capybara NFT Collection Item';
+
+task('deploy', 'deploy the smart contract on localhost for development')
+  .addOptionalParam('owner', 'the contract deployer address')
+  .setAction(async ({ owner }, { ethers }) => {
+    const Factory = await ethers.getContractFactory('AwesomeCapybaraNFTCollection');
+    const contract = await Factory.deploy();
+    await contract.deployed();
+
+    const { address } = contract;
+    console.log('Contract deployed to:', address);
+    return address;
+  });
+
+task('update-frontend', 'update frontend contract information')
+  .addParam('address', 'the contract address')
+  .setAction(async ({ address }, { network }) => {
+    const contractAbi = require(path.resolve(
+      __dirname,
+      './artifacts/contracts/AwesomeCapybaraNFTCollection.sol/AwesomeCapybaraNFTCollection.json'
+    ));
+    contractAbi.address = address;
+
+    await fs.promises.writeFile(
+      path.resolve(path.resolve(__dirname, './frontend/configs'), `${network.name}.json`),
+      JSON.stringify(contractAbi),
+      { flag: 'w' }
+    );
+  });
+
+task('add', 'add item to colection')
+  .addParam('address', 'the contract address')
+  .addParam('name', 'the item name')
+  .addParam('description', 'the item description')
+  .addParam('image', 'the item image')
+  .setAction(async ({ address, name, description, image }, { ethers, network }) => {
+    console.log('adding item (', name, description, image, ') to:', address);
+
+    console.log('connecting to', address);
+
+    const Factory = await ethers.getContractFactory('AwesomeCapybaraNFTCollection');
+    const contract = await Factory.attach(address);
+    await contract.deployed();
+
+    const imagePinataUrl = await uploadTokenImage(image, name, TOKEN_DESCRIPTION);
+
+    const tx = await contract.addItemToCollection(
+      `${TOKEN_NAME_PREFIX} ${name}`,
+      `${TOKEN_DESCRIPTION}: ${description || ''}`,
+      imagePinataUrl
+    );
+    const rc = await tx.wait();
+  });
+
+task('populate', 'add items to collection')
+  .addParam('address', 'the contract address')
+  .setAction(async ({ address }, { run }) => {
+    const images = await fs.promises.readdir(path.resolve(__dirname, 'tokens'));
+
+    const tokens = images.map((image) => {
+      const name = image.split('.')[0].replace(/_/g, ' ');
+
+      return {
+        name,
+        description: name,
+        image,
+      };
+    });
+
+    let token = tokens.shift();
+    while (token) {
+      await run('add', { address, ...token });
+      token = tokens.shift();
+    }
+    console.log('done');
+  });
+
+task('mint', 'mint a random token from contract')
+  .addParam('address', 'the contract address')
+  .addParam('user', 'the user address')
+  .setAction(async ({ address, user }, { ethers }) => {
+    const signers = await ethers.getSigners();
+    const signer = signers.find(({ address }) => address === user);
+    if (!signer) {
+      throw new Error(`user address ${user} is not a valid signer`);
+    }
+
+    console.log('connecting to', address);
+
+    const Factory = await ethers.getContractFactory('AwesomeCapybaraNFTCollection');
+    const contract = await Factory.attach(address);
+    await contract.deployed();
+
+    const tx = await contract.mintNFT();
+    const rc = await tx.wait();
+
+    const {
+      args: [, tokenId],
+    } = rc.events.find(({ event }: { event: string }) => <string>event === 'TokenMinted');
+    const tokenURI = `https://testnets.opensea.io/assets/${address}/${tokenId.toNumber()}`;
+    console.log(tokenURI);
+
+    return tokenURI;
+  });
+
+task('prod', 'deploy contract to prod')
+  .addOptionalParam('verify', 'verify the contract')
+  .setAction(async ({ verify }, { ethers, network, run }) => {
+    const address = await run('deploy');
+
+    if (!!verify) {
+      if (['hardhat', 'localhost'].includes(network.name)) {
+        throw new Error('contract can be verified only on real chains');
+      }
+
+      console.log('waiting...');
+
+      // wait until the contract is available across the entire net
+      await new Promise((resolve) => setTimeout(resolve, 1000 * 30));
+
+      console.log('verifing...');
+
+      await run('verify:verify', {
+        address,
+        constructorArguments: [],
+      });
+
+      console.log('contract verified');
+    }
+
+    const [owner] = await ethers.getSigners();
+
+    await run('populate', { address });
+    await run('mint', { address, user: owner.address });
+    await run('update-frontend', { address });
+  });
+
+task('dev', 'set a dev contract on the hardhat node').setAction(
+  async ({}, { ethers, network, run }) => {
+    if (network.name !== 'localhost') {
+      throw new Error('this task should be run on localhost');
+    }
+
+    const address = await run('deploy');
+
+    const [owner] = await ethers.getSigners();
+
+    await run('populate', { address });
+    await run('mint', { address, user: owner.address });
+    await run('update-frontend', { address });
   }
-});
+);
 
-// You need to export an object to set up your config
-// Go to https://hardhat.org/config/ to learn more
-
-/**
- * @type import('hardhat/config').HardhatUserConfig
- */
 export default {
   solidity: {
     version: '0.8.4',

@@ -9,7 +9,11 @@
     "docs": "cd frontend; npm run build; cp -r dist/* ../docs;",
     "frontend:test": "cd frontend; npm run test",
     "contract:test": "hardhat test test/*",
-    "test": "npm run contract:test && npm run frontend:test"
+    "test": "npm run contract:test && npm run frontend:test",
+    "contract:deploy": "hardhat run scripts/deploy-contract.ts",
+    "contract:add": "hardhat run scripts/add-tokens.ts",
+    "contract:mint": "hardhat run scripts/mint-nft.ts",
+    "contract:dev": "yarn contract:deploy --network localhost && yarn contract:add --network localhost && yarn contract:mint --network localhost"
   },
   "dependencies": {
     "@pinata/sdk": "^1.1.23",
