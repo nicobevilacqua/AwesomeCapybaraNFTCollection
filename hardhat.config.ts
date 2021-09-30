@@ -139,10 +139,7 @@ task('prod', 'deploy contract to prod')
       console.log('contract verified');
     }
 
-    const [owner] = await ethers.getSigners();
-
     await run('populate', { address });
-    await run('mint', { address, user: owner.address });
     await run('update-frontend', { address });
   });
 
