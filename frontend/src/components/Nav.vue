@@ -93,7 +93,7 @@
         text-white
         shadow-inner
       "
-      @click="connectWallet"
+      @click="$emit('connect-wallet')"
     >
       Connect Wallet
     </button>
@@ -105,8 +105,6 @@
 
   export default defineComponent({
     name: 'Nav',
-
-    inject: ['connectWallet'],
 
     props: {
       network: {

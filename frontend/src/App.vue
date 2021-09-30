@@ -92,12 +92,6 @@
       Footer,
     },
 
-    provide() {
-      return {
-        connectWallet: this.connectWallet,
-      };
-    },
-
     data: () => ({
       metamaskDetected: false,
       network: undefined as ethers.providers.Network | undefined,
@@ -290,6 +284,7 @@
           ).args;
           await this.getTokenData(tokenId);
         }
+        this.initializeData();
         this.claiming = false;
       },
 
@@ -329,6 +324,7 @@
     <Nav
       v-bind="{ network, address, appReady, validNetwork, expectedNetwork }"
       @switch-chain="switchToValidChain"
+      @connect-wallet="connectWallet"
     />
     <main
       class="
@@ -342,7 +338,6 @@
         text-gray-600
         flex-grow
       "
-      style="z-index: 9"
     >
       <h1 class="text-2xl md:text-3xl text-center font-semibold mb-3">
         Awesome Capybara NFT Collection
