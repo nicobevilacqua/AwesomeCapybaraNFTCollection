@@ -4,13 +4,6 @@
   import Footer from '@components/Footer.vue';
   import ProgressBar from '@/components/ProgressBar.vue';
 
-  import ConfettiGenerator from 'confetti-js';
-  function renderConfetti() {
-    const confettiSettings = { target: 'confetti' };
-    const confetti = new ConfettiGenerator(confettiSettings);
-    confetti.render();
-  }
-
   import { defineComponent } from 'vue';
 
   import { Contract, ethers } from 'ethers';
@@ -26,6 +19,7 @@
 
   const isProd = !!import.meta.env.PROD;
 
+  // @ts-ignore
   import { address as contractAddress, abi as contractAbi } from '@contract';
 
   const { ethereum } = window as any;
@@ -118,7 +112,7 @@
 
       claiming: false,
 
-      token: null as Token,
+      token: null as Token | null,
     }),
 
     computed: {
@@ -173,15 +167,15 @@
         await this.getCollectionData();
       },
 
-      showAlert(...args) {
+      showAlert(...args: any) {
         if (!this.$refs.alert) {
           return;
         }
-        this.$refs.alert.showAlert(...args);
+        (this.$refs.alert as any).showAlert(...args);
       },
 
       hideAlert() {
-        this.$refs.alert.hideAlert();
+        (this.$refs.alert as any).hideAlert();
       },
 
       async checkIfWalletIsConnected() {

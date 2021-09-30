@@ -26,7 +26,6 @@ jobs:
       - name: Build Docs
         run: |
           cd frontend
-          npm install
           npm run build
 
       - name: Deploy Docs 🚀
