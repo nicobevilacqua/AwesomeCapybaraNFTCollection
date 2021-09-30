@@ -1,8 +1,19 @@
-<script setup lang="ts">
-  import { defineComponent, ref } from 'vue';
+<script lang="ts">
+  import Alert from '@components/Alert.vue';
+  import Nav from '@components/Nav.vue';
+  import Footer from '@components/Footer.vue';
+  import ProgressBar from '@/components/ProgressBar.vue';
 
-  import { ethers } from 'ethers';
+  import ConfettiGenerator from 'confetti-js';
+  function renderConfetti() {
+    const confettiSettings = { target: 'confetti' };
+    const confetti = new ConfettiGenerator(confettiSettings);
+    confetti.render();
+  }
 
+  import { defineComponent } from 'vue';
+
+  import { Contract, ethers } from 'ethers';
   import detectEthereumProvider from '@metamask/detect-provider';
 
   import {
@@ -17,130 +28,326 @@
 
   import { address as contractAddress, abi as contractAbi } from '@contract';
 
-  const { ethereum } = window;
+  const { ethereum } = window as any;
 
-  const validNetwork = ref(false);
-  const address = ref(false);
+  let provider: ethers.providers.Web3Provider;
+  function getProvider() {
+    if (!provider) {
+      provider = new ethers.providers.Web3Provider(ethereum, 'any');
+    }
+    return provider;
+  }
+
+  let contract: Contract;
+  function getContract() {
+    if (!contract) {
+      const provider = getProvider();
+      const signer = provider.getSigner();
+      contract = new ethers.Contract(contractAddress, contractAbi, signer);
+    }
+    return contract;
+  }
+
+  type TransactionError = {
+    code: number;
+    error: {
+      message: string;
+    };
+    data: {
+      message: string;
+    };
+  };
+
+  function getTransactionErrorMessage(response: TransactionError) {
+    const { code, error, data } = response;
+    if (code === TRANSACTION_ERROR_CODES.REJECTED_BY_USER) {
+      return ERRORS.TRANSACTION_REJECTED_BY_USER;
+    }
+
+    if (code === TRANSACTION_ERROR_CODES.PENDING) {
+      return ERRORS.TRANSACTION_WAITING_FOR_APPOVAL;
+    }
+
+    if (error) {
+      return error.message;
+    }
+
+    if (data) {
+      return data.message;
+    }
+
+    console.error(response);
+    return ERRORS.TRANSACTION_FAILED;
+  }
+
+  export default defineComponent({
+    name: 'App',
+
+    components: {
+      Alert,
+      Nav,
+      ProgressBar,
+      Footer,
+    },
+
+    provide() {
+      return {
+        connectWallet: this.connectWallet,
+      };
+    },
+
+    data: () => ({
+      metamaskDetected: false,
+      network: undefined as ethers.providers.Network | undefined,
+      expectedNetwork: isProd ? NETWORKS.RINKEBY : NETWORKS.LOCALHOST,
+
+      collectionSize: null as null | number,
+      availableItemsLength: null as null | number,
+
+      address: null as null | string,
+
+      transactionRunning: null as null | string,
+
+      claiming: false,
+    }),
+
+    computed: {
+      collectionUrl() {
+        return `https://testnets.opensea.io/collection/${contractAddress}`;
+      },
+
+      validNetwork() {
+        if (!this.network) {
+          return false;
+        }
+
+        if (Array.isArray(this.expectedNetwork.chainId)) {
+          return this.expectedNetwork.chainId.includes(this.network.chainId);
+        }
+
+        return this.expectedNetwork.chainId === this.network.chainId;
+      },
+
+      appReady() {
+        return this.metamaskDetected && this.validNetwork;
+      },
+    },
+
+    async mounted() {
+      this.metamaskDetected = !!(await detectEthereumProvider());
+      if (!this.metamaskDetected) {
+        this.showAlert(ERRORS.MISSING_METAMASK);
+        return;
+      }
+
+      this.network = ethers.providers.getNetwork(
+        parseInt(ethereum.networkVersion, 10)
+      );
+
+      this.initEvents();
+
+      if (!this.validNetwork) {
+        return;
+      }
+
+      await this.checkIfWalletIsConnected();
+      await this.initializeData();
+    },
+
+    methods: {
+      async initializeData() {
+        if (!this.address) {
+          return;
+        }
+
+        await this.getCollectionData();
+      },
+
+      showAlert(...args) {
+        if (!this.$refs.alert) {
+          return;
+        }
+        this.$refs.alert.showAlert(...args);
+      },
+
+      hideAlert() {
+        this.$refs.alert.hideAlert();
+      },
+
+      async checkIfWalletIsConnected() {
+        if (!this.appReady) {
+          return;
+        }
+
+        const [address] = await ethereum.request({
+          method: 'eth_accounts',
+        });
+
+        this.address = address;
+      },
+
+      async switchToValidChain() {
+        try {
+          await ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [
+              {
+                chainId: this.expectedNetwork.params.chainId,
+              },
+            ],
+          });
+        } catch (error: any) {
+          // Missing network
+          if (error.code === 4902) {
+            try {
+              await ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [this.expectedNetwork.params],
+              });
+            } catch (error: any) {
+              const errorMessage = getTransactionErrorMessage(error);
+              this.showAlert(errorMessage, ALERT_TYPES.ERROR);
+            }
+          }
+          const errorMessage = getTransactionErrorMessage(error);
+          this.showAlert(errorMessage, ALERT_TYPES.ERROR);
+        }
+      },
+
+      async getCollectionData() {
+        const contract = getContract();
+        const [availableItemsLength, collectionSize] = await Promise.all([
+          contract.availableItemsLength(),
+          contract.collectionSize(),
+        ]);
+        this.availableItemsLength = parseInt(availableItemsLength, 10);
+        this.collectionSize = parseInt(collectionSize, 10);
+      },
+
+      async doTransaction(transactionPromise: Promise<any>) {
+        if (this.transactionRunning) {
+          return;
+        }
+
+        this.hideAlert();
+
+        try {
+          const tx = await transactionPromise;
+
+          this.transactionRunning = tx.hash;
+
+          const receipt = await tx.wait();
+
+          if (receipt.status === 0) {
+            this.showAlert(ERRORS.TRANSACTION_FAILED, ALERT_TYPES.ERROR);
+          } else {
+            this.showAlert(MESSAGES.TRANSACTION_COMPLETED, ALERT_TYPES.SUCCESS);
+          }
+          return receipt;
+        } catch (response: any) {
+          const errorMessage = getTransactionErrorMessage(response);
+          this.showAlert(errorMessage, ALERT_TYPES.ERROR);
+        } finally {
+          this.transactionRunning = null;
+        }
+      },
+
+      async connectWallet() {
+        if (!this.appReady) {
+          return;
+        }
+
+        const [address] = await ethereum.request({
+          method: 'eth_requestAccounts',
+        });
+
+        this.address = address;
+
+        this.initializeData();
+      },
+
+      async claim() {
+        this.claiming = true;
+        const contract = getContract();
+        const transactionPromise = contract.mintNFT();
+        const receipt = await this.doTransaction(transactionPromise);
+        const [_, tokenId] = receipt.events.find(
+          (event: any) => event.event === 'TokenMinted'
+        ).params;
+        const token = await contract.tokenURI(tokenId);
+        debugger;
+        this.claiming = false;
+      },
+
+      initEvents() {
+        if (!this.metamaskDetected) {
+          return;
+        }
+
+        ethereum.on('accountsChanged', ([newAddress]: [string]) => {
+          this.address = newAddress;
+          if (!newAddress) {
+            return;
+          }
+
+          this.initializeData();
+        });
+
+        const provider = getProvider();
+        provider.on('network', (newNetwork) => {
+          this.network = newNetwork;
+          if (!this.validNetwork) {
+            this.showAlert(`You should change to Rinkeby`);
+            return;
+          }
+
+          this.initializeData();
+        });
+      },
+    },
+  });
 </script>
 
 <template>
-  <div id="app" class="flex flex-col h-screen">
-    <nav class="w-full py-4 px-4 shadow flex justify-between text-sm">
-      <div
-        v-if="validNetwork"
-        class="
-          bg-blue-500
-          hover:bg-blue-600
-          px-4
-          py-2
-          rounded
-          shadow
-          hover:shadow-md
-          font-semibold
-          max-w-xs
-          mr-1
-          capitalize
-          text-white
-        "
-      >
-        Rinkeby
-      </div>
-      <button
-        v-else
-        type="button"
-        class="
-          bg-blue-500
-          hover:bg-blue-600
-          px-4
-          py-2
-          rounded
-          shadow
-          hover:shadow-md
-          font-semibold
-          max-w-xs
-          mr-1
-          capitalize
-          text-white
-          shadow-inner
-        "
-      >
-        Change To Rinkeby
-      </button>
-      <div
-        v-if="address"
-        class="
-          bg-green-500
-          hover:bg-green-600
-          px-4
-          py-2
-          rounded
-          shadow
-          hover:shadow-md
-          font-semibold
-          overflow-ellipsis overflow-hidden
-          max-w-xs
-          ml-1
-          text-white
-          shadow-inner
-        "
-      >
-        0xa78252c65344e34b098308fc62fe77cba9eb1927
-      </div>
-
-      <button
-        v-else
-        type="button"
-        class="
-          bg-green-500
-          hover:bg-green-600
-          px-4
-          py-2
-          rounded
-          shadow
-          hover:shadow-md
-          font-semibold
-          overflow-ellipsis overflow-hidden
-          max-w-xs
-          ml-1
-          text-white
-          shadow-inner
-        "
-      >
-        Connect Wallet
-      </button>
-    </nav>
-    <main class="container mx-auto flex flex-col py-12 flex-grow items-center">
-      <h1 class="text-3xl font-semibold mb-6">
+  <ProgressBar :running="!!transactionRunning" />
+  <Alert ref="alert" />
+  <div class="flex flex-col bg-gray-50">
+    <Nav
+      v-bind="{ network, address, appReady, validNetwork, expectedNetwork }"
+      @switch-chain="switchToValidChain"
+    />
+    <main
+      class="
+        w-full
+        flex flex-col
+        py-6
+        px-3
+        md:px-0 md:py-12
+        flex-grow
+        items-center
+      "
+      style="z-index: 9"
+    >
+      <h1 class="text-2xl md:text-3xl text-center font-semibold mb-3">
         Awesome Capybara NFT Collection
       </h1>
+      <h2 class="font-semibold mb-6">
+        Total collection size: {{ collectionSize }} items.
+      </h2>
+      <p>There are still {{ availableItemsLength }} items available.</p>
       <p class="text-md">Claim your own Capybara NFT today!</p>
-      <button
-        class="
-          my-6
-          px-12
-          bg-blue-700
-          hover:bg-blue-600
-          px-4
-          py-2
-          rounded
-          shadow
-          hover:shadow-md
-          font-semibold
-          max-w-xs
-          mr-1
-          capitalize
-          text-white
-        "
-      >
-        Claim NFT
-      </button>
       <button
         type="button"
         class="
           inline-flex
           items-center
-          px-4
+          justify-center
           py-2
+          px-10
+          my-4
+          w-full
+          md:w-auto
+          text-center
           border border-transparent
           text-base
           leading-6
@@ -154,50 +361,74 @@
           transition
           ease-in-out
           duration-150
-          cursor-not-allowed
         "
-        disabled=""
+        :class="{ 'cursor-not-allowed': claiming }"
+        :disabled="claiming"
+        @click="claim"
       >
-        Claiming...
+        <svg
+          class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          v-if="claiming"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+        {{ claiming ? 'Claiming...' : 'Claim NFT' }}
       </button>
-      <div
-        class="
-          bg-red-100
-          border border-red-400
-          text-red-700
-          px-4
-          py-3
-          my-6
-          rounded
-          relative
-          full-w
-        "
-        role="alert"
-      >
-        <strong class="font-bold">Holy smokes!</strong>
-        <span class="block sm:inline">Something seriously bad happened.</span>
-        <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
-          <svg
-            class="fill-current h-6 w-6 text-red-500"
-            role="button"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-          >
-            <title>Close</title>
-            <path
-              d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"
-            />
-          </svg>
-        </span>
+      <div class="max-w-sm rounded-xl border px-4 py-6 md:p-10 shadow bg-white">
+        <div class="text-center pb-5 uppercase font-semibold">
+          Capybara and a cat
+        </div>
+        <img
+          class="w-full rounded"
+          src="https://gateway.pinata.cloud/ipfs/QmPkoFYGRJSnFNHWA8V8VVUHmVzjZtKojQ4Z5vaan43C18"
+        />
+        <div class="py-5">Description</div>
+        <a href="" class="underline">See at OpenSea</a>
       </div>
-    </main>
-    <footer class="w-full border-t bg-white flex justify-center py-4">
-      You can find the source code&nbsp;
       <a
-        class="underline block"
-        href="https://github.com/nicobevilacqua/AwesomeCapybaraNFTCollection"
-        >here</a
+        class="
+          bg-green-500
+          hover:bg-green-600
+          px-10
+          py-2
+          my-4
+          rounded
+          shadow
+          hover:shadow-md
+          font-semibold
+          w-full
+          md:w-auto
+          justify-center
+          inline-flex
+          ml-1
+          text-base
+          leading-6
+          font-medium
+          rounded-md
+          text-white
+          leading-6
+          shadow-inner
+        "
+        :href="collectionUrl"
       >
-    </footer>
+        View Collection
+      </a>
+    </main>
+    <Footer />
   </div>
 </template>

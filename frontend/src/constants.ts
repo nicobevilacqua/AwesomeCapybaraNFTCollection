@@ -4,11 +4,6 @@ export const NETWORKS = {
     name: 'Mainnet',
   },
 
-  ROPSTEN: {
-    chainId: 3,
-    name: 'Ropsten',
-  },
-
   RINKEBY: {
     chainId: 4,
     name: 'Rinkeby',
@@ -46,20 +41,20 @@ export const TRANSACTION_ERROR_CODES = {
 };
 
 export const ERRORS = {
-  MISSING_METAMASK: 'METAMASK IS REQUIRED',
-  TRANSACTION_FAILED: 'THE TRANSACTION HAS FAILED',
-  TRANSACTION_REJECTED_BY_USER: 'TRANSACTION REJECTED',
-  TRANSACTION_WAITING_FOR_APPOVAL: 'TRANSACTION WAITING FOR APROVAL',
-  INVALID_NETWORK: 'INVALID NETWORK',
-  DEFAULT: 'ERROR',
+  MISSING_METAMASK: 'Metamask is required.',
+  TRANSACTION_FAILED: 'The transaction has failed.',
+  TRANSACTION_REJECTED_BY_USER: 'Transaction rejected.',
+  TRANSACTION_WAITING_FOR_APPOVAL: 'Transaction waiting for aproval.',
+  INVALID_NETWORK: 'Invalid network',
+  DEFAULT: 'An error has happended.',
 };
 
 export const MESSAGES = {
-  TRANSACTION_COMPLETED: 'TRANSACTION COMPLETED',
+  TRANSACTION_COMPLETED: 'Transaction completed.',
 };
 
-export const ALERT_TYPES = {
-  SUCCESS: 'success',
-  ERROR: 'error',
-  WARNING: 'warning',
-};
+export enum ALERT_TYPES {
+  SUCCESS,
+  ERROR,
+  WARNING,
+}

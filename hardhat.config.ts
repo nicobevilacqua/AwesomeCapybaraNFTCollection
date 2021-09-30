@@ -150,6 +150,20 @@ task('prod', 'deploy contract to prod')
     await run('update-frontend', { address });
   });
 
+task('addEther', 'add ether to an account locally')
+  .addOptionalParam('to', 'the receiver address')
+  .setAction(async ({}, { ethers, network, run }) => {
+    if (network.name !== 'localhost') {
+      throw new Error('this task should be run on localhost');
+    }
+    const [signer] = await ethers.getSigners();
+    const tx = await signer.sendTransaction({
+      to: process.env.PUBLIC_KEY,
+      value: ethers.utils.parseEther('1.0'),
+    });
+    await tx.wait();
+  });
+
 task('dev', 'set a dev contract on the hardhat node').setAction(
   async ({}, { ethers, network, run }) => {
     if (network.name !== 'localhost') {
@@ -163,6 +177,7 @@ task('dev', 'set a dev contract on the hardhat node').setAction(
     await run('populate', { address });
     await run('mint', { address, user: owner.address });
     await run('update-frontend', { address });
+    await run('addEther');
   }
 );
 
@@ -179,6 +194,7 @@ export default {
 
   networks: {
     hardhat: {
+      chainId: 1337,
       initialBaseFeePerGas: 0, // workaround from https://github.com/sc-forks/solidity-coverage/issues/652#issuecomment-896330136 . Remove when that issue is closed.
     },
 
