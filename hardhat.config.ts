@@ -59,11 +59,7 @@ task('add', 'add item to colection')
 
     const imagePinataUrl = await uploadTokenImage(image, name, TOKEN_DESCRIPTION);
 
-    const tx = await contract.addItemToCollection(
-      `${TOKEN_NAME_PREFIX} ${name}`,
-      `${TOKEN_DESCRIPTION}: ${description || ''}`,
-      imagePinataUrl
-    );
+    const tx = await contract.addItemToCollection(name, description, imagePinataUrl);
     const rc = await tx.wait();
   });
 
