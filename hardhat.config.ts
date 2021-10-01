@@ -11,15 +11,13 @@ import path from 'path';
 import fs from 'fs';
 
 import { uploadTokenImage } from './utils/uploadTokenImage';
-
-const TOKEN_NAME_PREFIX = 'Collection Item:';
-const TOKEN_DESCRIPTION = 'Awesome Capybara NFT Collection Item';
+import { CONTRACT } from './constants';
 
 task('deploy', 'deploy the smart contract on localhost for development')
   .addOptionalParam('owner', 'the contract deployer address')
   .setAction(async ({ owner }, { ethers }) => {
     const Factory = await ethers.getContractFactory('AwesomeCapybaraNFTCollection');
-    const contract = await Factory.deploy();
+    const contract = await Factory.deploy(CONTRACT.NAME, CONTRACT.DESCRIPTION, CONTRACT.IMAGE);
     await contract.deployed();
 
     const { address } = contract;
@@ -57,7 +55,11 @@ task('add', 'add item to colection')
     const contract = await Factory.attach(address);
     await contract.deployed();
 
-    const imagePinataUrl = await uploadTokenImage(image, name, TOKEN_DESCRIPTION);
+    const imagePinataUrl = await uploadTokenImage(
+      image,
+      name,
+      'Awesome Capybara NFT Collection Item'
+    );
 
     const tx = await contract.addItemToCollection(name, description, imagePinataUrl);
     const rc = await tx.wait();
@@ -116,31 +118,36 @@ task('mint', 'mint a random token from contract')
 
 task('prod', 'deploy contract to prod')
   .addOptionalParam('verify', 'verify the contract')
-  .setAction(async ({ verify }, { ethers, network, run }) => {
+  .setAction(async ({ verify }, { network, run }) => {
     const address = await run('deploy');
 
     if (!!verify) {
-      if (['hardhat', 'localhost'].includes(network.name)) {
-        throw new Error('contract can be verified only on real chains');
-      }
-
       console.log('waiting...');
 
       // wait until the contract is available across the entire net
       await new Promise((resolve) => setTimeout(resolve, 1000 * 30));
-
-      console.log('verifing...');
-
-      await run('verify:verify', {
-        address,
-        constructorArguments: [],
-      });
-
-      console.log('contract verified');
+      await run('verifyContract', { address });
     }
 
     await run('populate', { address });
     await run('update-frontend', { address });
+  });
+
+task('verifyContract', 'verify contract')
+  .addParam('address', 'the contract address')
+  .setAction(async ({ address }, { network, run }) => {
+    if (['hardhat', 'localhost'].includes(network.name)) {
+      throw new Error('contract can be verified only on real chains');
+    }
+
+    console.log('verifing...');
+
+    await run('verify:verify', {
+      address,
+      constructorArguments: [CONTRACT.NAME, CONTRACT.DESCRIPTION, CONTRACT.IMAGE],
+    });
+
+    console.log('contract verified');
   });
 
 task('addEther', 'add ether to an account locally')

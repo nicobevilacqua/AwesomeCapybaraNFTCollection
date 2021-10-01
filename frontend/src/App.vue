@@ -111,7 +111,7 @@
 
     computed: {
       collectionUrl() {
-        return `https://testnets.opensea.io/collection/${contractAddress}`;
+        return `https://testnets.opensea.io/collection/awesome-capybara-nft-collection`;
       },
 
       validNetwork() {

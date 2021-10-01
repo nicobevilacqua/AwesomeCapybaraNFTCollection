@@ -11,22 +11,28 @@ contract AwesomeCapybaraNFTCollection is ERC721URIStorage {
 
   address private owner;
 
-  string private constant NAME_PREFIX = "Awesome Capybara NFT Collection Number: ";
-  string private constant DESCRIPTION_PREFIX = "Collection Item Number: ";
-
   using Counters for Counters.Counter;
   Counters.Counter private _tokenIds;
 
-  struct AvailableItem {
+  struct Item {
     string name;
     string description;
     string image;
   }
 
-  AvailableItem[] private availableItems;
+  string private contractName;
+  string private contractDescription;
+  string private contractImage;
 
-  constructor() ERC721("AwesomeCapybaraNFTCollection", "CAPY") {
+  Item[] private availableItems;
+  mapping(uint256 => Item) public tokensData;
+
+  constructor(string memory _contractName, string memory _contractDescription, string memory _contractImage) ERC721("AwesomeCapybaraNFTCollection", "CAPY") {
     owner = msg.sender;
+
+    contractName = _contractName;
+    contractDescription = _contractDescription;
+    contractImage = _contractImage;
   }
 
   modifier onlyOwner() {
@@ -41,8 +47,8 @@ contract AwesomeCapybaraNFTCollection is ERC721URIStorage {
     return uint256(keccak256(abi.encodePacked(_input)));
   }
 
-  function _pickAvailableItem(uint256 _position) internal returns (AvailableItem memory) {
-    AvailableItem memory pickedItem = availableItems[_position];
+  function _pickAvailableItem(uint256 _position) internal returns (Item memory) {
+    Item memory pickedItem = availableItems[_position];
     
     // remove picked image and fill the gap with last image in array
     availableItems[_position] = availableItems[availableItems.length - 1];
@@ -51,24 +57,28 @@ contract AwesomeCapybaraNFTCollection is ERC721URIStorage {
     return pickedItem;
   }
 
-  function _pickRandomAvailableItem(uint256 newItemId) internal returns(AvailableItem memory) {
+  function _pickRandomAvailableItem(uint256 newItemId) internal returns(Item memory) {
     uint256 rand = _random(string(abi.encodePacked(block.number, block.timestamp, msg.sender, newItemId)));
     
     rand = rand % availableItems.length;
 
-    AvailableItem memory item = _pickAvailableItem(rand);
+    Item memory item = _pickAvailableItem(rand);
 
     return item;
   }
 
-  function _getTokenName(string memory name, uint256 tokenId) private pure returns (string memory) {
-    string memory tokenName = string(abi.encodePacked(NAME_PREFIX, Strings.toString(tokenId), " - ", name));
-    return tokenName;
-  }
-
-  function _getTokenDescription(string memory description, uint256 tokenId) private pure returns (string memory) {
-    string memory tokenDescription = string(abi.encodePacked(DESCRIPTION_PREFIX, Strings.toString(tokenId), " - ", description));
-    return tokenDescription;
+  function _getEncodedUrl(string memory name, string memory description, string memory image) internal pure returns(string memory) {
+    string memory json = Base64.encode(
+      bytes(
+        string(
+          abi.encodePacked(
+            '{"name": "', name, '", "description": "', description, '", "image": "', image, '"}'
+          )
+        )
+      )
+    );
+    string memory encodedUrl = string(abi.encodePacked("data:application/json;base64,", json));
+    return encodedUrl;
   }
 
   function mintNFT() public {
@@ -78,32 +88,28 @@ contract AwesomeCapybaraNFTCollection is ERC721URIStorage {
     
     _safeMint(msg.sender, newTokenId);
 
-    AvailableItem memory availableItem = _pickRandomAvailableItem(newTokenId);
- 
-    string memory tokenName = _getTokenName(availableItem.name, newTokenId);
-    string memory tokenDescription = _getTokenDescription(availableItem.description, newTokenId);
-
-    string memory json = Base64.encode(
-      bytes(
-        string(
-          abi.encodePacked(
-            '{"name": "', tokenName, '", "description": "', tokenDescription, '", "image": "', availableItem.image, '"}'
-          )
-        )
-      )
-    );
-
-    string memory token = string(abi.encodePacked("data:application/json;base64,", json));
-
-    _setTokenURI(newTokenId, token);
+    tokensData[newTokenId] = _pickRandomAvailableItem(newTokenId);
     
     _tokenIds.increment();
 
     emit TokenMinted(msg.sender, newTokenId, block.timestamp);
   }
 
+  function contractURI() public view returns (string memory) {
+    string memory encodedContractURI = _getEncodedUrl(contractName, contractDescription, contractImage);
+    return encodedContractURI;
+  }
+
+  function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+    require(_exists(tokenId), "ERC721URIStorage: URI query for nonexistent token");
+    
+    Item memory token = tokensData[tokenId];
+
+    return _getEncodedUrl(token.name, token.description, token.image);
+  }
+
   function addItemToCollection(string calldata name, string calldata description, string calldata image) public onlyOwner {
-    availableItems.push(AvailableItem({
+    availableItems.push(Item({
       name: name,
       description: description,
       image: image

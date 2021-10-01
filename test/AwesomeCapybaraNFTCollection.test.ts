@@ -31,6 +31,8 @@ const ITEMS = ['item_1', 'item_2', 'item_3', 'item_4'].reduce((acum: any, item) 
   return acum;
 }, {});
 
+import { CONTRACT } from '../constants';
+
 describe('AwesomeCapybaraNFTCollection', () => {
   let contract: Contract;
   let owner: SignerWithAddress;
@@ -39,7 +41,7 @@ describe('AwesomeCapybaraNFTCollection', () => {
   beforeEach(async () => {
     [owner, user1, user2] = await ethers.getSigners();
     const Factory = await ethers.getContractFactory('AwesomeCapybaraNFTCollection');
-    contract = await Factory.deploy();
+    contract = await Factory.deploy(CONTRACT.NAME, CONTRACT.DESCRIPTION, CONTRACT.IMAGE);
     await contract.deployed();
   });
 
@@ -100,6 +102,16 @@ describe('AwesomeCapybaraNFTCollection', () => {
       const { owner, token } = await mintNFT(user1);
       expect(owner).to.equal(user1.address);
       expect(token.image).to.equal(ITEMS.item_1.image);
+    });
+
+    it(`should return the contract URI metadata`, async () => {
+      const contractURI = await contract.contractURI();
+      const contractMetadata: Item = JSON.parse(
+        Buffer.from(contractURI.replace('data:application/json;base64,', ''), 'base64').toString()
+      );
+      expect(contractMetadata.name).to.equal(CONTRACT.NAME);
+      expect(contractMetadata.description).to.equal(CONTRACT.DESCRIPTION);
+      expect(contractMetadata.image).to.equal(CONTRACT.IMAGE);
     });
 
     it('should fail if we try to mint a token without an available image', async () => {
