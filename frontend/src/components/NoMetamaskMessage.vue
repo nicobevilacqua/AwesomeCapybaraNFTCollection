@@ -11,7 +11,7 @@
       items-center
       text-center text-1xl
       flex-grow
-      py-10
+      py-5
       text-gray-600
     "
   >

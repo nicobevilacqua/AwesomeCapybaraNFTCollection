@@ -1,7 +1,7 @@
 <template>
   <transition name="fade">
     <div
-      v-if="show"
+      v-if="shown"
       class="
         flex flex-row
         items-center
@@ -53,7 +53,7 @@
           pointer
           overflow-ellipsis overflow-hidden
         "
-        @click="hideAlert"
+        @click="hide"
       >
         <span>×</span>
       </button>
@@ -65,44 +65,27 @@
   import { ALERT_TYPES } from '../constants';
   import { defineComponent } from 'vue';
 
+  // @ts-ignore
+  import { shown, type, hide, message } from '@composition/alert';
+
   export default defineComponent({
     name: 'Alert',
 
-    data: () => ({
-      show: false,
-      message: null as null | string,
-      timeout: null as any,
-      type: ALERT_TYPES.ERROR,
-    }),
+    setup() {
+      return { shown, type, hide, message };
+    },
 
     computed: {
       showError() {
-        return this.type === ALERT_TYPES.ERROR;
+        return type.value === ALERT_TYPES.ERROR;
       },
 
       alertClasses() {
         return {
-          'bg-red-500': this.type === ALERT_TYPES.ERROR,
-          'bg-yellow-500': this.type === ALERT_TYPES.WARNING,
-          'bg-green-500': this.type === ALERT_TYPES.SUCCESS,
+          'bg-red-500': type.value === ALERT_TYPES.ERROR,
+          'bg-yellow-500': type.value === ALERT_TYPES.WARNING,
+          'bg-green-500': type.value === ALERT_TYPES.SUCCESS,
         };
-      },
-    },
-
-    methods: {
-      showAlert(message: string, type = ALERT_TYPES.ERROR) {
-        clearTimeout(this.timeout);
-        this.message = message;
-        this.type = type;
-        this.show = true;
-        this.timeout = setTimeout(this.hideAlert, 5000);
-      },
-
-      hideAlert() {
-        clearTimeout(this.timeout);
-        this.show = false;
-        this.type = ALERT_TYPES.ERROR;
-        this.message = null;
       },
     },
   });

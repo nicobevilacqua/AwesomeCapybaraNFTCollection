@@ -22,6 +22,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
       '@components': path.resolve(__dirname, './src/components'),
       '@types': path.resolve(__dirname, './src/types'),
+      '@composition': path.resolve(__dirname, './src/composition'),
       '@contract': contractConfigPath,
     },
   },

@@ -6,26 +6,22 @@
       items-center
       justify-center
       py-2
-      px-10
+      px-4
       w-full
       md:w-auto
       text-center
       border border-transparent
-      text-base
-      leading-6
-      font-xs
       rounded-md
       text-white
       hover:shadow-md
       transition
       ease-in-out
       duration-150
-      max-w-xs
     "
     :class="{ 'cursor-not-allowed': loading || disabled }"
     :disabled="loading || disabled"
   >
-    <Spinner v-if="loading" class="text-white h-5 w-5" />
+    <Spinner v-if="loading" class="text-white h-5 w-5 -ml-1 mr-3" />
     {{ loading ? loadingText : text }}
   </button>
 </template>

@@ -14,7 +14,7 @@
     "
   >
     <div
-      v-if="validNetwork"
+      v-if="network.valid.value && network.current.value"
       class="
         bg-blue-500
         hover:bg-blue-600
@@ -30,32 +30,18 @@
         text-white
       "
     >
-      {{ network.name }}
+      {{ network.current.value.name }}
     </div>
-    <button
+    <ButtonWithSpinner
       v-else
-      type="button"
-      class="
-        bg-blue-500
-        hover:bg-blue-600
-        px-4
-        py-2
-        rounded
-        shadow
-        hover:shadow-md
-        font-semibold
-        max-w-xs
-        mr-1
-        capitalize
-        text-white
-        shadow-inner
-      "
-      @click="$emit('switch-chain')"
-    >
-      Change To {{ expectedNetwork.name }}
-    </button>
+      class="bg-blue-500 hover:bg-blue-600"
+      :loading="network.switching.value"
+      loadingText="Switching"
+      @click="network.switchToValid"
+      :text="`Switch to ${network.expected.name}`"
+    />
     <div
-      v-if="address"
+      v-if="wallet.address.value"
       class="
         bg-green-500
         hover:bg-green-600
@@ -72,7 +58,7 @@
         shadow-inner
       "
     >
-      {{ address }}
+      {{ wallet.address.value }}
     </div>
 
     <button
@@ -93,7 +79,7 @@
         text-white
         shadow-inner
       "
-      @click="$emit('connect-wallet')"
+      @click="wallet.connect"
     >
       Connect Wallet
     </button>
@@ -101,35 +87,27 @@
 </template>
 
 <script lang="ts">
+  import ButtonWithSpinner from './ButtonWithSpinner.vue';
   import { defineComponent } from 'vue';
+
+  import * as network from '../composition/network';
+  import * as wallet from '../composition/wallet';
 
   export default defineComponent({
     name: 'Nav',
 
+    components: {
+      ButtonWithSpinner,
+    },
+
+    setup() {
+      return { network, wallet };
+    },
+
     props: {
-      network: {
-        type: Object,
-        default: () => ({}),
-      },
-
-      address: {
-        type: String,
-        default: undefined,
-      },
-
       appReady: {
         type: Boolean,
         default: false,
-      },
-
-      validNetwork: {
-        type: Boolean,
-        default: false,
-      },
-
-      expectedNetwork: {
-        type: Object,
-        required: true,
       },
     },
   });
