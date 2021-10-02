@@ -69,10 +69,9 @@
           return;
         }
 
-        network.getCurrent();
-
         this.initEvents();
 
+        network.getCurrent();
         if (!network.valid.value) {
           return;
         }
@@ -105,10 +104,11 @@
             return;
           }
 
-          wallet.check();
-          if (wallet.address.value) {
-            collection.getData();
-          }
+          wallet.check().then(() => {
+            if (wallet.address.value) {
+              collection.getData();
+            }
+          });
         });
       },
     },
@@ -148,7 +148,7 @@
         <AddressNotConnected v-else-if="!wallet.address.value" />
 
         <template v-else>
-          <h2 class="font-semibold mb-6">
+          <h2 v-if="collection.size.value" class="font-semibold mb-6">
             Total collection size: {{ collection.size.value }} items.
           </h2>
           <TokenPreview v-if="token.token.value" :token="token.token.value" />
