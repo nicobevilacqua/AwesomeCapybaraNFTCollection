@@ -1,42 +1,25 @@
-# Advanced Sample Hardhat Project
+<div style="width: 100%; text-align: center;">
+<h1>Awesome Capybara NFT Collection</h1>
 
-This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
+<img style="max-width: 200px; width: 100%; margin: 20px auto;" src="https://nicobevilacqua.github.io/AwesomeCapybaraNFTCollection/logo.png" />
 
-The project comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts. It also comes with a variety of other tools, preconfigured to work with the project code.
+</div>
 
-Try running some of the following tasks:
+<p>This project is an example of an <a href="https://docs.openzeppelin.com/contracts/3.x/erc721#:~:text=ERC721%20is%20a%20standard%20for,across%20a%20number%20of%20contracts.">ERC721</a> NFT Collection.</p>
 
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-npx hardhat node
-npx hardhat help
-REPORT_GAS=true npx hardhat test
-npx hardhat coverage
-npx hardhat run scripts/deploy.js
-node scripts/deploy.js
-npx eslint '**/*.js'
-npx eslint '**/*.js' --fix
-npx prettier '**/*.{json,sol,md}' --check
-npx prettier '**/*.{json,sol,md}' --write
-npx solhint 'contracts/**/*.sol'
-npx solhint 'contracts/**/*.sol' --fix
-```
+<p>Each NFT has a name, a description and an image stored on <a href="https://ipfs.io/">IPFS</a>.</p>
 
-# Etherscan verification
+<p>The contract has a limited amount of available tokens to be minted and a frontend where anyone can go and mint their own token for free :D.</p>
 
-To try out Etherscan verification, you first need to deploy a contract to an Ethereum network that's supported by Etherscan, such as Ropsten.
+<p>This project was made using <a href="https://hardhat.org/">Hardhat</a> and <a href="https://docs.ethers.io/v5/">Ethers.js</a> as the Solidity dev environment and <a href="https://vuejs.org/">Vue.js</a>, <a href="https://vitejs.dev/">Vite</a>, <a href="https://tailwindcss.com/">Tailwind</a> on the frontend app.</p>
 
-In this project, copy the .env.template file to a file named .env, and then edit it to fill in the details. Enter your Etherscan API key, your Ropsten node URL (eg from Alchemy), and the private key of the account which will send the deployment transaction. With a valid .env file in place, first deploy your contract:
+<p>The images are stored on IPFS using the <a href="https://www.pinata.cloud/">Pinata</a> API.</p>
 
-```shell
-hardhat run --network ropsten scripts/deploy.js
-```
+<p>The contract was deployed on <a href="https://rinkeby.etherscan.io/">Rinkeby</a>.</p>
 
-Then, copy the deployment address and paste it in to replace `DEPLOYED_CONTRACT_ADDRESS` in this command:
+<p>The frontend is deployed on <a href="https://pages.github.com/">Github Pages</a>.</p>
 
-```shell
-npx hardhat verify --network ropsten DEPLOYED_CONTRACT_ADDRESS "Hello, Hardhat!"
-```
+<p>
+You can visit the live site <a href="https://nicobevilacqua.github.io/AwesomeCapybaraNFTCollection/">here</a>. Go and mint your own Capybara NFT :).</p>
+
+<p>Feel free to take whatever you want from the code.</p>
