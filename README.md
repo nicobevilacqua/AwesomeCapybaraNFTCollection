@@ -1,10 +1,8 @@
 <div style="width: 100%; text-align: center;">
 <h1>Awesome Capybara NFT Collection</h1>
-
-<img style="max-width: 200px; width: 100%; margin: 20px auto;" src="https://nicobevilacqua.github.io/AwesomeCapybaraNFTCollection/logo.png" />
-
+<img width="400" style="margin: 10px auto;" src="https://user-images.githubusercontent.com/5586894/135728448-f1226e1c-c095-40e4-9641-4a79f9fd6f99.png" />
 </div>
-
+<br/>
 <p>This project is an example of an <a href="https://docs.openzeppelin.com/contracts/3.x/erc721#:~:text=ERC721%20is%20a%20standard%20for,across%20a%20number%20of%20contracts.">ERC721</a> NFT Collection.</p>
 
 <p>Each NFT has a name, a description and an image stored on <a href="https://ipfs.io/">IPFS</a>.</p>
