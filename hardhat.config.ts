@@ -140,7 +140,11 @@ task('verifyContract', 'verify contract')
       throw new Error('contract can be verified only on real chains');
     }
 
+    await run('compile');
+
     console.log('verifing...');
+
+    console.log(address);
 
     await run('verify:verify', {
       address,
@@ -206,10 +210,9 @@ export default {
 
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
-    gasPrice: 21,
     coinmarketcap: process.env.CMC_KEY,
     currency: 'USD',
-    outputFile: process.env.TO_FILE ? path.resolve(__dirname, 'gasReporterOutput.json') : undefined,
+    outputFile: process.env.TO_FILE ? path.resolve(__dirname, 'reports', `gasReporterOutput-${(new Date()).getTime()}.json`) : undefined,
   },
 
   watcher: {
