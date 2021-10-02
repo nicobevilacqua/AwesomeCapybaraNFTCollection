@@ -183,7 +183,9 @@
             />
           </template>
           <h3 v-else>All the collection items were claimed! :(</h3>
-          <p class="pt-5">You can see the whole collection at OpenSea</p>
+          <p class="px-5 mt-4 text-center">
+            You can see the whole collection on OpenSea
+          </p>
           <ButtonWithSpinner
             class="
               bg-green-600

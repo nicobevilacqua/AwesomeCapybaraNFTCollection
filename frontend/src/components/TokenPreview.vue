@@ -66,8 +66,12 @@
     <div class="pt-5 pb-1 font-semibold">Description:</div>
     <div class="pb-5 pt-1">{{ token.description }}</div>
     <a :href="token.openSeaUrl" class="text-blue-400 underline"
-      >See at OpenSea</a
+      >See on OpenSea</a
     >
+    <p class="mt-5 text-gray-500 text-xs">
+      Note: It could take up to 10 minutes to be available on OpenSea. Please,
+      be patience.
+    </p>
   </div>
 </template>
 
