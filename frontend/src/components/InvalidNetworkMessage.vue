@@ -4,6 +4,8 @@
   import * as network from '../composition/network';
 
   export default defineComponent({
+    name: 'InvalidNetworkMessage',
+
     components: {
       ButtonWithSpinner,
     },

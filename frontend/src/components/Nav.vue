@@ -61,28 +61,14 @@
       {{ wallet.address.value }}
     </div>
 
-    <button
+    <ButtonWithSpinner
       v-else-if="appReady"
-      type="button"
-      class="
-        bg-green-500
-        hover:bg-green-600
-        px-4
-        py-2
-        rounded
-        shadow
-        hover:shadow-md
-        font-semibold
-        overflow-ellipsis overflow-hidden
-        max-w-xs
-        ml-1
-        text-white
-        shadow-inner
-      "
+      class="bg-green-500 hover:bg-green-600"
+      :loading="wallet.connecting.value"
+      loadingText="Connecting"
       @click="wallet.connect"
-    >
-      Connect Wallet
-    </button>
+      text="Connect Wallet"
+    />
   </nav>
 </template>
 

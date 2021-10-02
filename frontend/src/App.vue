@@ -3,6 +3,7 @@
   import Nav from '@/components/Nav.vue';
   import InvalidNetworkMessage from '@/components/InvalidNetworkMessage.vue';
   import NoMetamaskMessage from '@/components/NoMetamaskMessage.vue';
+  import AddressNotConnected from '@/components/AddressNotConnected.vue';
   import Footer from '@/components/Footer.vue';
   import Spinner from '@/components/Spinner.vue';
   import TokenPreview from '@/components/TokenPreview.vue';
@@ -16,15 +17,13 @@
   import * as token from './composition/token';
   import * as transaction from './composition/transaction';
 
-  import { Token } from './types/Token';
-
   import { defineComponent } from 'vue';
 
   import detectEthereumProvider from '@metamask/detect-provider';
 
   const { ethereum } = window as any;
 
-  import { getProvider, getContract } from './utils/web3';
+  import { getProvider } from './utils/web3';
 
   export default defineComponent({
     name: 'App',
@@ -39,20 +38,11 @@
       Footer,
       Spinner,
       ButtonWithSpinner,
+      AddressNotConnected,
     },
 
     data: () => ({
       metamaskDetected: false,
-
-      collectionSize: null as null | number,
-      availableItemsLength: null as null | number,
-
-      transactionRunning: null as null | string,
-
-      claiming: false,
-
-      token: null as Token | null,
-
       loading: false,
     }),
 
@@ -79,7 +69,7 @@
           return;
         }
 
-        this.network.getCurrent();
+        network.getCurrent();
 
         this.initEvents();
 
@@ -87,17 +77,10 @@
           return;
         }
 
-        await Promise.all([this.wallet.check(), this.getCollectionData()]);
-      },
-
-      async getCollectionData() {
-        const contract = getContract();
-        const [availableItemsLength, collectionSize] = await Promise.all([
-          contract.availableItemsLength(),
-          contract.collectionSize(),
-        ]);
-        this.availableItemsLength = parseInt(availableItemsLength, 10);
-        this.collectionSize = parseInt(collectionSize, 10);
+        await wallet.check();
+        if (wallet.address.value) {
+          await collection.getData();
+        }
       },
 
       initEvents() {
@@ -106,7 +89,13 @@
         }
 
         ethereum.on('accountsChanged', ([_address]: [string]) => {
-          this.wallet.address.value = _address;
+          wallet.address.value = _address;
+
+          if (!_address) {
+            return;
+          }
+
+          collection.getData();
         });
 
         const provider = getProvider();
@@ -116,8 +105,10 @@
             return;
           }
 
-          this.getCollectionData();
-          this.wallet.check();
+          wallet.check();
+          if (wallet.address.value) {
+            collection.getData();
+          }
         });
       },
     },
@@ -154,16 +145,19 @@
       <template v-else>
         <NoMetamaskMessage v-if="!metamaskDetected" />
         <InvalidNetworkMessage v-else-if="!network.valid.value" />
+        <AddressNotConnected v-else-if="!wallet.address.value" />
 
         <template v-else>
           <h2 class="font-semibold mb-6">
-            Total collection size: {{ collectionSize }} items.
+            Total collection size: {{ collection.size.value }} items.
           </h2>
           <TokenPreview v-if="token.token.value" :token="token.token.value" />
           <template
-            v-else-if="availableItemsLength && availableItemsLength > 0"
+            v-else-if="collection.available && collection.available.value > 0"
           >
-            <p>There are still {{ availableItemsLength }} items available.</p>
+            <p>
+              There are still {{ collection.available.value }} items available.
+            </p>
             <p class="text-md text-blue-500">
               Claim your own Capybara NFT today!
             </p>
