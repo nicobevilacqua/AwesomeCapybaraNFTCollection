@@ -153,7 +153,11 @@
           </h2>
           <TokenPreview v-if="token.token.value" :token="token.token.value" />
           <template
-            v-else-if="collection.available && collection.available.value > 0"
+            v-else-if="
+              collection.available &&
+              collection.available.value &&
+              collection.available.value > 0
+            "
           >
             <p>
               There are still {{ collection.available.value }} items available.
