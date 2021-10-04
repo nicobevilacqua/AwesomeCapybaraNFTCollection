@@ -55,11 +55,16 @@ task('add', 'add item to colection')
     const contract = await Factory.attach(address);
     await contract.deployed();
 
+    const imageOrigPath = path.resolve(__dirname, 'tokens_to_upload', image);
+    const imageDestPath = path.resolve(__dirname, 'tokens', image);
+
     const imagePinataUrl = await uploadTokenImage(
-      image,
+      imageOrigPath,
       name,
       'Awesome Capybara NFT Collection Item'
     );
+
+    fs.promises.rename(imageOrigPath, imageDestPath);
 
     const tx = await contract.addItemToCollection(name, description, imagePinataUrl);
     const rc = await tx.wait();
@@ -68,7 +73,7 @@ task('add', 'add item to colection')
 task('populate', 'add items to collection')
   .addParam('address', 'the contract address')
   .setAction(async ({ address }, { run }) => {
-    const images = await fs.promises.readdir(path.resolve(__dirname, 'tokens'));
+    const images = await fs.promises.readdir(path.resolve(__dirname, 'tokens_to_upload'));
 
     const tokens = images.map((image) => {
       const name = image.split('.')[0].replace(/_/g, ' ');
@@ -206,13 +211,21 @@ export default {
       url: process.env.RINKEBY_URL || '',
       accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+
+    smart_chain_testnet: {
+      url: process.env.SMART_CHAIN_TEST_URL,
+      accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
   },
 
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
     coinmarketcap: process.env.CMC_KEY,
     currency: 'USD',
-    outputFile: process.env.TO_FILE ? path.resolve(__dirname, 'reports', `gasReporterOutput-${(new Date()).getTime()}.json`) : undefined,
+    gasPrice: 6,
+    outputFile: process.env.TO_FILE
+      ? path.resolve(__dirname, 'reports', `gasReporterOutput-${new Date().getTime()}.json`)
+      : undefined,
   },
 
   watcher: {

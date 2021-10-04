@@ -10,13 +10,11 @@ const pinata = pinataSDK(
 );
 
 export async function uploadTokenImage(
-  imageName: string,
+  imagePath: string,
   name: string,
   description: string
 ): Promise<string> {
-  const readableStreamForFile = fs.createReadStream(
-    path.resolve(__dirname, '..', 'tokens', imageName)
-  );
+  const readableStreamForFile = fs.createReadStream(imagePath);
   const options = {
     pinataMetadata: {
       name,
