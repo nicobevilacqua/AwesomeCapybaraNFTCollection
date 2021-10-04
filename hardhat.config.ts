@@ -213,7 +213,7 @@ export default {
     },
 
     smart_chain_testnet: {
-      url: process.env.SMART_CHAIN_TEST_URL,
+      url: process.env.SMART_CHAIN_TEST_URL || '',
       accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
   },
