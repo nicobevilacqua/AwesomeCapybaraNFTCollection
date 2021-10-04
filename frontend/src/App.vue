@@ -148,6 +148,11 @@
         <AddressNotConnected v-else-if="!wallet.address.value" />
 
         <template v-else>
+          <img
+            v-if="!token.token.value"
+            src="/hero.jpeg"
+            class="w-80 my-5 rounded"
+          />
           <h2 v-if="collection.size.value" class="font-semibold mb-6">
             Total collection size: {{ collection.size.value }} items.
           </h2>
