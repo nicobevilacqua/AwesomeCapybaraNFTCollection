@@ -222,7 +222,7 @@ export default {
     enabled: process.env.REPORT_GAS !== undefined,
     coinmarketcap: process.env.CMC_KEY,
     currency: 'USD',
-    gasPrice: 6,
+    gasPrice: !!process.env.CMC_KEY ? undefined : 30,
     outputFile: process.env.TO_FILE
       ? path.resolve(__dirname, 'reports', `gasReporterOutput-${new Date().getTime()}.json`)
       : undefined,
