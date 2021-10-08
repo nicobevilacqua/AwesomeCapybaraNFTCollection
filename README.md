@@ -12,11 +12,11 @@
 
 <p>The contract has a limited amount of available tokens to be minted and a frontend where anyone can go and mint their own token for free :D.</p>
 
-<p>This project was made using <a href="https://hardhat.org/">Hardhat</a> and <a href="https://docs.ethers.io/v5/">Ethers.js</a> as the Solidity dev environment and <a href="https://vuejs.org/">Vue.js</a>, <a href="https://vitejs.dev/">Vite</a>, <a href="https://tailwindcss.com/">Tailwind</a> on the frontend app.</p>
+<p>This project has been made using <a href="https://hardhat.org/">Hardhat</a> and <a href="https://docs.ethers.io/v5/">Ethers.js</a> as the Solidity dev environment and <a href="https://vuejs.org/">Vue.js</a>, <a href="https://vitejs.dev/">Vite</a> and <a href="https://tailwindcss.com/">Tailwind</a> for the frontend app.</p>
 
-<p>The images are stored on IPFS using the <a href="https://www.pinata.cloud/">Pinata</a> API.</p>
+<p>The images are stored on IPFS using <a href="https://www.pinata.cloud/">Pinata</a>.</p>
 
-<p>The contract was deployed on <a href="https://rinkeby.etherscan.io/">Rinkeby</a>.</p>
+<p>The contract is deployed on <a href="https://rinkeby.etherscan.io/">Rinkeby</a>.</p>
 
 <p>The frontend is deployed on <a href="https://pages.github.com/">Github Pages</a>.</p>
 
